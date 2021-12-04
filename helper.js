@@ -19,4 +19,8 @@ async function getMovieById(id) {
     return await client.db("b28wd").collection("movies").findOne({ id: id });
 }
 
+<<<<<<< HEAD
 export { getMovies, createMovies, getMovieById, deleteMovieById, updateMovieById };
+=======
+export { getMovies, createMovies, getMovieById, deleteMovieById, updateMovieById };
+>>>>>>> a6cd6cf406a79752a32a37d194e2d2ca7bf36d35
