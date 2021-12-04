@@ -1,9 +1,17 @@
-const express = require("express");
+import express from "express";
+import dotenv from "dotenv";
+import { MongoClient } from 'mongodb';
+import { getMovies, createMovies, getMovieById, deleteMovieById, updateMovieById } from "./helper.js";
+
+dotenv.config();
+
+
 const app = express();
+const PORT = process.env.PORT;
 
-const PORT = 9000;
+app.set('port', (process.env.PORT || 9000));
 
-
+/*
 const movies = [
     {
         id: "100",
@@ -71,35 +79,87 @@ const movies = [
 ];
 
 
+*/
+
+app.use(express.json());
+
+const MONGO_URL = process.env.MONGO_URL;
+
+
+//const MONGO_URL = "mongodb://localhost"
+
+
+
+//mongodb+srv://<username>:<password>@cluster0.nhgum.mongodb.net/myFirstDatabase?retryWrites=true&w=majority
+
+async function createConnection(){
+    const client = new MongoClient(MONGO_URL);
+    await client.connect();
+    console.log("Mongodb Connected");
+    return client;
+}
+
+export const client = await createConnection();
+
+
 app.get("/", (request, response) => {
 response.send("Hello😁😄");
 });
 
-app.get("/movies", (request, response) => {
-   console.log(request.query);
-   const { language, rating } = request.query;
-   console.log(language, rating);
+app.get("/movies", async (request, response) => {
 
-let filterMovies = movies;
+console.log(request.query);
+const filter = request.query;
+console.log(filter);
+if (filter.rating) {
+filter.rating = parseInt(filter.rating);
+}
 
-   if(language) {
-       filterMovies = filterMovies.filter((mv) => mv.language === language);
-   } 
+const filterMovies = await getMovies(filter);
 
-   if(rating) {
-    filterMovies = filterMovies.filter((mv) => mv.rating === parseInt(rating));       
-   }
-   response.send(filterMovies);
+response.send(filterMovies);
 });
 
-app.get("/movies/:id", (request, response) => {
+
+app.post("/movies", async (request, response) => {
+    const data = request.body;
+    const result = await createMovies(data);
+    response.send(result);
+    });
+
+
+app.get("/movies/:id", async (request, response) => {
    console.log(request.params);
    const {id} = request.params;
-   const movie = movies.find((mv) => mv.id === id);
+   const movie = await getMovieById(id); 
    console.log(movie); 
    movie 
    ? response.send(movie) 
    : response.status(404).send({message: "No matching movie found"});
 });
 
+app.delete("/movies/:id", async(request, response) => {
+    console.log(request.params);
+    const{id} = request.params;
+    const result = await deleteMovieById(id);
+
+    result.deletedCount > 0
+    ? response.send(movie)
+    : response.status(404).send({message: "No matching movie found"});
+});
+
+
+app.put("/movies/:id", async (request, response) => {
+    console.log(request.params);
+    const{id} = request.params;
+    const data = request.body;
+    const result = await updateMovieById(id, data);
+    const movie = await getMovieById(id);
+
+    response.send(movie);
+});
+
+
 app.listen(PORT, () => console.log("App is started in", PORT));
+
+
